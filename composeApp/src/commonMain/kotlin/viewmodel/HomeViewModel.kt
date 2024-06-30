@@ -1,63 +1,28 @@
 package viewmodel;
 
+import com.app.compose_navigation_mvvm_flow.utils.UiState
+import network.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import models.ApiResponse
-import network.ApiStatus
-import network.NetworkRepository
+import models.Products
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 
-class HomeViewModel(private val networkRepository: NetworkRepository) {
+class HomeViewModel : BaseViewModel(),KoinComponent {
 
-    private val _homeState = MutableStateFlow(HomeState())
-    private val _homeViewState: MutableStateFlow<HomeScreenState> = MutableStateFlow(HomeScreenState.Loading)
-    val homeViewState = _homeViewState.asStateFlow()
+    val repository: Repository by inject()
 
-    suspend fun getProducts() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                networkRepository.getProductList().collect{response ->
-                    when(response.status){
-                        ApiStatus.LOADING->{
-                            _homeState.update { it.copy(isLoading = true) }
-                        }
-                        ApiStatus.SUCCESS->{
-                            _homeState.update { it.copy(isLoading = false, errorMessage = "", response.data) }
-                        }
-                        ApiStatus.ERROR->{
-                            _homeState.update { it.copy(isLoading = false,errorMessage = response.message) }
-                        }
-                    }
-                    _homeViewState.value = _homeState.value.toUiState()
-                }
-            } catch (e: Exception) {
-                _homeState.update { it.copy(isLoading = false,errorMessage ="Failed to fetch data") }
-            }
-        }
+    val _uiStateProductList = MutableStateFlow<UiState<ApiResponse?>>(UiState.Loading)
+    val uiStateProductList: StateFlow<UiState<ApiResponse?>> = _uiStateProductList
+
+    fun getProductList() = CoroutineScope(Dispatchers.IO).launch {
+        fetchData(_uiStateProductList) { repository.getProducts() }
     }
-    sealed class HomeScreenState {
-        data object Loading: HomeScreenState()
-        data class Error(val errorMessage: String):HomeScreenState()
-        data class Success(val responseData: ApiResponse):HomeScreenState()
-    }
-    private data class HomeState(
-        val isLoading:Boolean = false,
-        val errorMessage: String?=null,
-        val responseData: ApiResponse?=null
-    ) {
-        fun toUiState(): HomeScreenState {
-            return if (isLoading) {
-                HomeScreenState.Loading
-            } else if(errorMessage?.isNotEmpty()==true) {
-                HomeScreenState.Error(errorMessage)
-            } else {
-                HomeScreenState.Success(responseData!!)
-            }
-        }
-    }
+
 }

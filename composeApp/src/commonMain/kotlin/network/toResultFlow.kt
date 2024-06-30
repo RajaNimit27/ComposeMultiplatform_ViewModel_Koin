@@ -1,19 +1,23 @@
-package network
+package data.remote
 
+
+import com.app.compose_navigation_mvvm_flow.utils.UiState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 
-fun <T> toResultFlow(call: suspend () -> NetWorkResult<T?>) : Flow<NetWorkResult<T>> {
-    return flow {
-        emit(NetWorkResult.Loading(true))
-        val c = call.invoke()
-        c.let { response ->
-            try {
-                println("response${response.data}")
-                emit(NetWorkResult.Success(response.data))
-            } catch (e: Exception) {
-              //  emit(NetWorkResult.Error("error", e.toString()))
+fun <T> toResultFlow(call: suspend () -> T?) : Flow<UiState<T?>> {
+    return flow<UiState<T?>> {
+            emit(UiState.Loading)
+            val c = call.invoke()
+            c.let { response ->
+                try {
+                    emit(UiState.Success(response))
+                } catch (e: Exception) {
+                    emit(UiState.Error(e.toString()))
+                }
             }
-        }
-    }
+        }.flowOn(Dispatchers.IO)
 }

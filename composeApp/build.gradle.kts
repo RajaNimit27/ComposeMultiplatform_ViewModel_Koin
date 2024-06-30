@@ -37,7 +37,6 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
-          //  implementation(libs.kotlinx.coroutines.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,9 +48,9 @@ kotlin {
             implementation(libs.bundles.ktor)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.kotlin.serialization)
-          //  implementation(libs.kotlinx.coroutines.core)
             implementation(libs.media.kamel)
             implementation(libs.koin.compose)
+            implementation(libs.koin.composeVM)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
